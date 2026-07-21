@@ -5,8 +5,11 @@ import com.nikhilmicroservice.ecommerce.inventory_service.repository.ProductRepo
 import com.nikhilmicroservice.ecommerce.inventory_service.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestClient;
 
 import java.util.List;
 
@@ -16,6 +19,17 @@ import java.util.List;
 @RequestMapping("/products")
 public class ProductController {
     private final ProductService productService;
+    private final DiscoveryClient discoveryClient;
+    private final RestClient restClient;
+
+    @GetMapping("/fetchOrders")
+    public String fetchOrders() {
+        ServiceInstance orderServiceInstance = discoveryClient.getInstances("order-service").getFirst();
+        return restClient.get()
+                .uri(orderServiceInstance.getUri()+"/orders/core/helloOrders")
+                .retrieve()
+                .body(String.class);
+    }
 
     @GetMapping
     public ResponseEntity<List<ProductDto>> getAllProducts() {

@@ -15,10 +15,16 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/orders")
+@RequestMapping("/core")
 @Slf4j
 public class OrderController {
     private final OrderService orderService;
+
+    @GetMapping("/helloOrders")
+    public String helloOrders() {
+        return "Hello Order Service";
+    }
+
 
     @GetMapping
     public ResponseEntity<List<OrderRequestDto>>getAllOrders(HttpServletRequest request){
