@@ -6,6 +6,9 @@ import com.nikhilmicroservice.ecommerce.order_service.entity.OrderItems;
 import com.nikhilmicroservice.ecommerce.order_service.entity.OrderStatus;
 import com.nikhilmicroservice.ecommerce.order_service.entity.Orders;
 import com.nikhilmicroservice.ecommerce.order_service.repository.OredersRepository;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -34,6 +37,9 @@ public class OrderService {
         return modelMapper.map(order, OrderRequestDto.class);
     }
 
+    //@Retry(name = "inventoryRetry", fallbackMethod = "fallbackCreateOrder")
+    @CircuitBreaker(name = "inventoryCircuitBreaker", fallbackMethod = "fallbackCreateOrder")
+    @RateLimiter(name = "inventoryRateLimiter", fallbackMethod = "fallbackCreateOrder")
     public OrderRequestDto createOrder(OrderRequestDto orderRequestDto) {
         log.info("Order Service createOrder");
         Double totalPrice = inventoryOpenFeignClient.reduceStock(orderRequestDto);
@@ -46,5 +52,9 @@ public class OrderService {
         Orders savedOrder = orderRepository.save(order);
 
         return modelMapper.map(savedOrder, OrderRequestDto.class);
+    }
+    public OrderRequestDto fallbackCreateOrder(OrderRequestDto orderRequestDto, Throwable throwable) {
+        log.error("Fallback method called due to: {}", throwable.getMessage());
+        return new OrderRequestDto(); // Return a default or error response
     }
 }
