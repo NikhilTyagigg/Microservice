@@ -1,8 +1,11 @@
 package com.nikhilmicroservice.ecommerce.inventory_service.service;
 
+import com.nikhilmicroservice.ecommerce.inventory_service.dto.OrderRequestDto;
+import com.nikhilmicroservice.ecommerce.inventory_service.dto.OrderRequestItemDto;
 import com.nikhilmicroservice.ecommerce.inventory_service.dto.ProductDto;
 import com.nikhilmicroservice.ecommerce.inventory_service.entity.Product;
 import com.nikhilmicroservice.ecommerce.inventory_service.repository.ProductRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -31,5 +34,26 @@ public class ProductService {
         Optional<Product> inventory=productRepository.findById(id);
      return inventory.map(item->modelMapper.map(item,ProductDto.class))
              .orElseThrow(()->new RuntimeException("Inventory not found"));
+    }
+
+    @Transactional
+    public Double reduceStock(OrderRequestDto orderRequestDto) {
+        log.info("Reducing stock for inventory");
+        Double totalPrice=0.0;
+        for(OrderRequestItemDto orderRequestItemDto:orderRequestDto.getItems())
+        {
+            Long productId=orderRequestItemDto.getProductId();
+            Integer quantity=orderRequestItemDto.getQuantity();
+            Product product = productRepository.findById(productId)
+                    .orElseThrow(() -> new RuntimeException("Product not found: " + productId));
+            if(product.getStock()<quantity)
+            {
+                throw new RuntimeException("Insufficient stock for product: " + productId);
+            }
+            product.setStock(product.getStock()-quantity);
+            productRepository.save(product);
+            totalPrice += product.getPrice() * quantity;
+        }
+        return totalPrice;
     }
 }

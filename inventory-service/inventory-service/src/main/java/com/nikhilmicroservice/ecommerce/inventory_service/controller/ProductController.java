@@ -1,5 +1,6 @@
 package com.nikhilmicroservice.ecommerce.inventory_service.controller;
 
+import com.nikhilmicroservice.ecommerce.inventory_service.dto.OrderRequestDto;
 import com.nikhilmicroservice.ecommerce.inventory_service.dto.ProductDto;
 import com.nikhilmicroservice.ecommerce.inventory_service.repository.ProductRepository;
 import com.nikhilmicroservice.ecommerce.inventory_service.service.ProductService;
@@ -40,5 +41,10 @@ public class ProductController {
     public ResponseEntity<ProductDto> getProductById(@PathVariable Long id) {
         ProductDto product = productService.getProductById(id);
         return ResponseEntity.ok(product);
+    }
+    @PutMapping("/reduce-stocks")
+    public ResponseEntity<Double> reduceStock(@RequestBody OrderRequestDto orderRequestDto) {
+        Double totalPrice = productService.reduceStock(orderRequestDto);
+        return ResponseEntity.ok(totalPrice);
     }
 }
